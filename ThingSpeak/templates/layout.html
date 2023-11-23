@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, 50px);
+      grid-template-rows: repeat(8, 50px);
+      gap: 1px;
+    }
+
+    .cell {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #000;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      cursor: pointer;
+      background-color: #eee;
+      transition: background-color 0.3s; /* Add a smooth transition effect */
+    }
+
+    .cell.dark {
+      background-color: #aaa;
+    }
+
+    .cell.clicked {
+      background-color: #87CEEB; /* Change color when clicked */
+    }
+  </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+  // Create the initial checkerboard state
+  const boardState = [
+    ['', 'w', '', 'w', '', 'w', '', 'w'],
+    ['w', '', 'w', '', 'w', '', 'w', ''],
+    ['', 'w', '', 'w', '', 'w', '', 'w'],
+    ['', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', ''],
+    ['b', '', 'b', '', 'b', '', 'b', ''],
+    ['', 'b', '', 'b', '', 'b', '', 'b'],
+    ['b', '', 'b', '', 'b', '', 'b', '']
+  ];
+
+  // Create the HTML board
+  const app = document.getElementById('app');
+  const board = document.createElement('div');
+  board.className = 'board';
+
+  // Keep track of clicked cells
+  let firstClick = null;
+
+  boardState.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      const cellElement = document.createElement('div');
+      cellElement.className = `cell ${((rowIndex + colIndex) % 2 === 0) ? 'dark' : ''}`;
+      cellElement.textContent = cell;
+      cellElement.addEventListener('click', () => handleCellClick(rowIndex, colIndex, cellElement));
+      board.appendChild(cellElement);
+    });
+  });
+
+  app.appendChild(board);
+
+ // Handle cell click event
+ function handleCellClick(row, col, cellElement) {
+    // If it's the first click, store the cell information and add the "clicked" class
+    if (!firstClick) {
+      firstClick = { row, col, element: cellElement };
+      cellElement.classList.add('clicked');
+    } else {
+      // If it's the second click, remove the "clicked" class from the first clicked cell
+      firstClick.element.classList.remove('clicked');
+
+      // If it's the second click, send information to the server
+      const secondClick = { row, col, element: cellElement };
+      sendCellInformation(firstClick, secondClick);
+
+      // Reset firstClick after processing the second click
+      firstClick = null;
+    }
+  }
+
+  // Function to send cell information to the server
+  function sendCellInformation(firstClick, secondClick) {
+    const data = {
+      firstClick: { row: firstClick.row, col: firstClick.col },
+      secondClick: { row: secondClick.row, col: secondClick.col }
+    };
+
+    // Send a POST request to the server
+    fetch('/handle_click', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Server response:', data);
+      // Add any additional frontend logic here if needed
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  }
+</script>
+
+</body>
+</html>
