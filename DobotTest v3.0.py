@@ -281,5 +281,3 @@ while True:
     # retirar pedras capturadas para fora do tabuleiro
     for i in cap_b:
         dobotremove(i)
-
-    print(cap_w, cap_b)
